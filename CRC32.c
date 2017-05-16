@@ -2,6 +2,10 @@
 
 // Variavel utilizada para debug
 #define DEBUG 0
+// 1 para
+// 2 para
+// 3 para
+// 4 para
 
 // Variavel utilizada para rodar o exemplo do livro
 #define EXEMPLO 0
@@ -174,7 +178,7 @@ int main(int argc, char * argv[]){
   }
 
   // Impressao do encoding
-  printf("\n\nEncoding [Part II]: i(x) << 24 (3 bytes) = ");
+  printf("\n\nEncoding [Part II]: alignment of i(x) AND i(x) << 24 (3 bytes) = ");
   i = 0;
   while (i < TAM_PACOTE+3) {
     printf("0x%x ", encoding[i]);
@@ -186,28 +190,110 @@ int main(int argc, char * argv[]){
   /*
    * Divisao
    */
+  // Desloca o gerador para o grau mais alto da info (x6)
+  unsigned char gerador_deslocado = *gerador;
 
+  // Grau inicial do encoding
+  int grau_encoding;
+  grau_encoding = ((TAM_PACOTE)*8)+26;
 
-  //TODO: xor byte a byte do pacote com o gerador
-  //int contador = 0;
-  //while(contador <= SHIFTS){
-    // XOR bit a bit
-    //resultado = resultado ^ gerador_shift;
+  #if DEBUG == 4
+  printf("GI %d\n", grau_encoding);
+  #endif
 
-    // Impressao
-    //printf("\n\t%X\n", gerador_shift);
-    //printf("\t________");
-    //printf("\n\t%X\n", resultado);
+  // Loop para avaliacao do grau do encoding
+  i = 0;
+  do {
+    #if DEBUG == 4
+    printf("E %x\n", encoding[i]);
+    #endif
 
-    // Se eh multiplo, para
-    //if(resultado == 0){
-      //break;
-    //}
+    // Pega o msnibble
+    msnibble = encoding[i] & 0xF0;
+    msnibble >>= 4;
+    #if DEBUG == 4
+    printf("MSN %x\n", msnibble);
+    #endif
 
-    // Desloca o gerador para a direita
-    //gerador_shift = gerador_shift >> 1;
-    //contador++;
-  //}
+    // MS nibble nao eh 0
+    if(msnibble != 0){
+      // MS nibble = 0001
+      if(msnibble == 1){
+        grau_encoding -= 3;
+        break;
+      }
+      // MS nibble = 001x
+      else if(msnibble == 2 || msnibble == 3){
+        grau_encoding -= 2;
+        break;
+      }
+      // MS nibble = 01xx
+      else if(msnibble == 4 || msnibble == 5 || msnibble == 6 || msnibble == 7){
+        grau_encoding -= 1;
+        break;
+      }
+      // MS nibble = 1xxx
+    }
+
+    // Pega o lsnibble
+    lsnibble = encoding[i] & 0x0F;
+    #if DEBUG == 3
+    printf("LSN %x\n", lsnibble);
+    #endif
+
+    // LS nibble nao eh 0
+    if(lsnibble != 0){
+      // LS nibble = 0001
+      if(lsnibble == 1){
+        grau_encoding -= (3+4);
+        break;
+      }
+      // LS nibble = 001x
+      else if(lsnibble == 2 || lsnibble == 3){
+        grau_encoding -= (2+4);
+        break;
+      }
+      // LS nibble = 01xx
+      else if(lsnibble == 4 || lsnibble == 5 || lsnibble == 6 || lsnibble == 7){
+        grau_encoding -= (1+4);
+        break;
+      }
+      // LS nibble = 1xxx
+    }
+
+    // Loop
+    grau_encoding-=8;
+    i++;
+
+  } while (encoding[i] == 0);
+
+  printf("Degree of encoding = %d\n", grau_encoding);
+
+  // Gerador possui grau x26, para ter xn, eh necessario deslocar de n-26
+
+  //gerador_deslocado <<= 3;
+  // Impressao do gerador deslocado
+  // printf("\nShifted g(x): 0x");
+  // printf("%x\n", gerador_deslocado);
+
+  //  // Divisao em si
+  //  printf("\nDivision:");
+  //  int i = 0;
+  //  while (gerador_deslocado != gerador[0]) {
+  //    printf("\n0x%x\n", encoding);
+  //    printf("0x%x\n", gerador_deslocado);
+  //    printf("----\n");
+  //    // Xor bit a bit entre o gerador deslocado e o encoding
+  //    encoding ^= gerador_deslocado;
+  //    printf("0x%x\n", encoding);
+  //    gerador_deslocado >>= 1;
+  //    i++;
+  //  }
+   //
+  //  // Impressao do campo CRC
+  //  printf("\nCRC Field: r(x) = ");
+  //  printf("0x%x\n", encoding);
+  //  printf("\n");
 
   #else
   /* Polinomio gerador do exemplo do livro:
@@ -240,7 +326,7 @@ int main(int argc, char * argv[]){
    * Calculo do enconding
    */
   // Multiplica a info por x3 (maior grau do polinomio gerador)
-  // x3 i(x) = x6 + x5
+  // x3*i(x) = x6 + x5
   // Acrescenta 3 bits 0 no fim do i(x)
   unsigned char encoding = *info;
   encoding <<= 3;
@@ -249,7 +335,32 @@ int main(int argc, char * argv[]){
   /*
    * Divisao
    */
+  // Desloca o gerador para o grau mais alto da info (x6)
+  unsigned char gerador_deslocado = *gerador;
+  // Gerador possui grau x3, para ter x6, eh necessario deslocar de 6-3 = 3
+  gerador_deslocado <<= 3;
+  // Impressao do gerador deslocado
+  printf("\nShifted g(x): 0x");
+  printf("%x\n", gerador_deslocado);
 
+  // Divisao em si
+  printf("\nDivision:");
+  int i = 0;
+  while (gerador_deslocado != gerador[0]) {
+    printf("\n0x%x\n", encoding);
+    printf("0x%x\n", gerador_deslocado);
+    printf("----\n");
+    // Xor bit a bit entre o gerador deslocado e o encoding
+    encoding ^= gerador_deslocado;
+    printf("0x%x\n", encoding);
+    gerador_deslocado >>= 1;
+    i++;
+  }
+
+  // Impressao do campo CRC
+  printf("\nCRC Field: r(x) = ");
+  printf("0x%x\n", encoding);
+  printf("\n");
 
   #endif
 
