@@ -2,10 +2,11 @@
 
 // Variavel utilizada para debug
 #define DEBUG 0
-// 1 para
-// 2 para
-// 3 para
-// 4 para
+// 0 => desativado
+// 1 e 6 => para verificao do ponteiro auxnos deslocamentos
+// 2 e 7 => deslocamento e alinhamento
+// 3 => calculo do grau
+// 4 => n deslocamentos g(x)
 
 // Variavel utilizada para rodar o exemplo do livro
 #define EXEMPLO 0
@@ -36,11 +37,11 @@ int main(int argc, char * argv[]){
    * POL: x26 + x23 + x22 + x16 + x12 + x11 + x10 + x8 + x7 + x5 + x4 + x2 + x + 1
    * HEX: 0x04c11db7
    */
-  static const unsigned char gerador[4] = {
+  unsigned char gerador[4] = {
     0x04, 0xc1, 0x1d, 0xb7
   };
   // Impressao do polinomio gerador
-  printf("Generator ponynomial: g(x) = x26 + x23 + x22 + x16 + x12 + x11 + x10 + x8 + x7 + x5 + x4 + x2 + x + 1\n");
+  printf("Generator ponynomial: g(x) = x26 + x23 + x22 + x16 + x12 + x11 + x10 + x8 + x7 + x5 + x4 + x2 + x + 1\n\n");
   printf("Generator ponynomial: g(x) = 0x");
   int i = 0;
   while (i < 4) {
@@ -108,19 +109,19 @@ int main(int argc, char * argv[]){
     #endif
 
     // Deslocamento do byte atual por 2 bits
-    deslocamento = (unsigned int)deslocamento << 2;
+    deslocamento <<= 2;
     printf("0x%x ", deslocamento);
 
     // Separacao em nibbles
     // Nibble menos significativo = 0x0n
     lsnibble = deslocamento & 0x0F;
-    #if DEBUG == 3
+    #if DEBUG == 2
     printf("(LSN) %x\t", lsnibble);
     #endif
     // Nibble mais significativo = 0xn0
     msnibble = deslocamento & 0xF0;
     msnibble >>= 4;
-    #if DEBUG == 3
+    #if DEBUG == 2
     printf("(MSN) %x\n", msnibble);
     #endif
 
@@ -140,7 +141,7 @@ int main(int argc, char * argv[]){
     #endif
 
     // Deslocamento do proximo byte por 2 bits
-    deslocamento_proximo = (unsigned int)deslocamento_proximo << 2;
+    deslocamento_proximo <<= 2;
     #if DEBUG == 2
     printf("(<<2) %x\t", deslocamento_proximo);
     #endif
@@ -149,12 +150,12 @@ int main(int argc, char * argv[]){
     // Nibble mais mais significativo = 0xn00
     mmsnibble_proximo = deslocamento_proximo & 0xF00;
     mmsnibble_proximo >>= 8;
-    #if DEBUG == 3
+    #if DEBUG == 2
     printf("(MMSN) %x\n", mmsnibble_proximo);
     #endif
 
     // Construcao do novo vetor
-    #if DEBUG == 3
+    #if DEBUG == 2
     printf("Enconding\n");
     printf("MS %x\t", msnibble << 4);
     printf("LS %x\t", lsnibble);
@@ -163,7 +164,7 @@ int main(int argc, char * argv[]){
     #endif
 
     encoding[i] = (msnibble << 4) | (lsnibble) | (mmsnibble_proximo);
-    #if DEBUG == 3
+    #if DEBUG == 2
     printf("%x\n", encoding[i]);
     #endif
 
@@ -178,7 +179,7 @@ int main(int argc, char * argv[]){
   }
 
   // Impressao do encoding
-  printf("\n\nEncoding [Part II]: alignment of i(x) AND i(x) << 24 (3 bytes) = ");
+  printf("\n\nEncoding [Part II]: alignment of i(x) AND i(x) << (3 bytes) = ");
   i = 0;
   while (i < TAM_PACOTE+3) {
     printf("0x%x ", encoding[i]);
@@ -190,29 +191,26 @@ int main(int argc, char * argv[]){
   /*
    * Divisao
    */
-  // Desloca o gerador para o grau mais alto da info (x6)
-  unsigned char gerador_deslocado = *gerador;
-
   // Grau inicial do encoding
   int grau_encoding;
   grau_encoding = ((TAM_PACOTE)*8)+26;
 
-  #if DEBUG == 4
-  printf("GI %d\n", grau_encoding);
+  #if DEBUG == 3
+  printf("grau inicial encoding = %d\n", grau_encoding);
   #endif
 
   // Loop para avaliacao do grau do encoding
   i = 0;
   do {
-    #if DEBUG == 4
-    printf("E %x\n", encoding[i]);
+    #if DEBUG == 3
+    printf("encoding[%d] = %x\n", i, encoding[i]);
     #endif
 
     // Pega o msnibble
     msnibble = encoding[i] & 0xF0;
     msnibble >>= 4;
-    #if DEBUG == 4
-    printf("MSN %x\n", msnibble);
+    #if DEBUG == 3
+    printf("MSN = %x\n", msnibble);
     #endif
 
     // MS nibble nao eh 0
@@ -238,7 +236,7 @@ int main(int argc, char * argv[]){
     // Pega o lsnibble
     lsnibble = encoding[i] & 0x0F;
     #if DEBUG == 3
-    printf("LSN %x\n", lsnibble);
+    printf("LSN = %x\n", lsnibble);
     #endif
 
     // LS nibble nao eh 0
@@ -267,14 +265,141 @@ int main(int argc, char * argv[]){
 
   } while (encoding[i] == 0);
 
-  printf("Degree of encoding = %d\n", grau_encoding);
+  printf("Degree of encoding = %d\n\n", grau_encoding);
 
   // Gerador possui grau x26, para ter xn, eh necessario deslocar de n-26
+  unsigned int n_deslocamentos_gerador = grau_encoding - 26;
+  #if DEBUG == 4
+  printf("numero deslocamentos no gerador = %d\n", n_deslocamentos_gerador);
+  #endif
 
-  //gerador_deslocado <<= 3;
+  // Numero de bytes 0 a serem incluidos no fim
+  unsigned int n_bytes_0 = n_deslocamentos_gerador / 8;
+  #if DEBUG == 4
+  printf("numero bytes 0 no fim = %d\n", n_bytes_0);
+  #endif
+
+  // Numero de bits a serem deslocados dentro do g(x)
+  unsigned int n_bits = n_deslocamentos_gerador % 8;
+  #if DEBUG == 4
+  printf("numero bits um a um = %d\n\n", n_bits);
+  #endif
+
+  // Ponteiro para endereco de memoria inicial do gerador
+  unsigned char *aux_gerador = gerador;
+  // Representacao do deslocamento (4 bytes)
+  unsigned int deslocamento_gerador;
+  unsigned int deslocamento_proximo_gerador;
+  // Vetor gerador (1 byte cada elemento), n_bytes_0 bytes a mais para o deslocamento
+  unsigned char gerador_deslocado[4+n_bytes_0];
+
+  // Impressao do encoding
+  printf("g(x) [Part I]: i(x) << 6 (byte to byte) = ");
+  i = 0;
+  // Preenche o encoding deslocando o i(x) por 2 bits 0
+  while (i < 4) {
+
+    #if DEBUG == 6
+    printf("Endereco\n");
+    printf("aux = %p\n", aux_gerador);
+    printf("ger = %p\n", (void*)&gerador[i]);
+
+    printf("Conteudo\n");
+    printf("aux = %x\n", *aux_gerador);
+    printf("ger = %x\n", gerador[i]);
+    #endif
+
+    #if DEBUG == 7
+    // Byte atual do i(x)
+    printf("\nDeslocamento\n");
+    printf("%x\t", *aux_gerador);
+    #endif
+
+    // Deslocamento armazena o byte atual do i(x)
+    deslocamento_gerador = *aux_gerador;
+    #if DEBUG == 7
+    printf("%x\t", deslocamento_gerador);
+    #endif
+
+    // Deslocamento do byte atual por 2 bits
+    deslocamento_gerador <<= 2;
+    printf("0x%x ", deslocamento_gerador);
+
+    // Separacao em nibbles
+    // Nibble menos significativo = 0x0n
+    lsnibble = deslocamento_gerador & 0x0F;
+    #if DEBUG == 7
+    printf("(LSN) %x\t", lsnibble);
+    #endif
+    // Nibble mais significativo = 0xn0
+    msnibble = deslocamento_gerador & 0xF0;
+    msnibble >>= 4;
+    #if DEBUG == 7
+    printf("(MSN) %x\n", msnibble);
+    #endif
+
+    // Vai para o proximo elemento do i(x)
+    aux_gerador++;
+
+    #if DEBUG == 7
+    // Byte atual do i(x)
+    printf("Deslocamento Proximo\n");
+    printf("%x\t", *aux_gerador);
+    #endif
+
+    // Deslocamento_proximo armazena o proximo byte do i(x)
+    deslocamento_proximo_gerador = *aux_gerador;
+    #if DEBUG == 7
+    printf("%x\t", deslocamento_proximo_gerador);
+    #endif
+
+    // Deslocamento do proximo byte por 2 bits
+    deslocamento_proximo_gerador <<= 2;
+    #if DEBUG == 7
+    printf("(<<2) %x\t", deslocamento_proximo_gerador);
+    #endif
+
+    // Separacao em nibbles
+    // Nibble mais mais significativo = 0xn00
+    mmsnibble_proximo = deslocamento_proximo_gerador & 0xF00;
+    mmsnibble_proximo >>= 8;
+    #if DEBUG == 7
+    printf("(MMSN) %x\n", mmsnibble_proximo);
+    #endif
+
+    // Construcao do novo vetor
+    #if DEBUG == 7
+    printf("Alinhamento\n");
+    printf("MS %x\t", msnibble << 4);
+    printf("LS %x\t", lsnibble);
+    printf("MMS_P %x\t", mmsnibble_proximo);
+    printf("LS||MMS_P %x\n", (lsnibble) | (mmsnibble_proximo));
+    #endif
+
+    gerador_deslocado[i] = (msnibble << 4) | (lsnibble) | (mmsnibble_proximo);
+    #if DEBUG == 7
+    printf("%x\n", gerador_deslocado[i]);
+    #endif
+
+    // Loop
+    i++;
+  }
+  // Preenche os 3 ultimos bytes com 0
+  while (i < n_bytes_0) {
+    // Loop
+    gerador_deslocado[i] = 0;
+    i++;
+  }
+
   // Impressao do gerador deslocado
-  // printf("\nShifted g(x): 0x");
-  // printf("%x\n", gerador_deslocado);
+  printf("\n\ng(x) [Part II]: alignment of g(x) AND g(x) << (%d bytes) = ", n_bytes_0);
+  i = 0;
+  while (i < 4+n_bytes_0) {
+    printf("0x%x ", gerador_deslocado[i]);
+    // Loop
+    i++;
+  }
+  printf("\n\n");
 
   //  // Divisao em si
   //  printf("\nDivision:");
