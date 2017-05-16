@@ -7,6 +7,7 @@
 // 2 e 7 => deslocamento e alinhamento
 // 3 => calculo do grau
 // 4 => n deslocamentos g(x)
+// 5 => tamanhos do enconding e g(x)
 
 // Variavel utilizada para rodar o exemplo do livro
 #define EXEMPLO 0
@@ -74,7 +75,7 @@ int main(int argc, char * argv[]){
   unsigned int deslocamento;
   unsigned int deslocamento_proximo;
   // Vetor encoding (1 byte cada elemento), 3 bytes a mais para o deslocamento
-  unsigned short int encoding[TAM_PACOTE+3];
+  unsigned short int encoding[TAM_PACOTE+4];
   // Nibbles (4 bits cada nibble)
   unsigned short int lsnibble;
   unsigned short int msnibble;
@@ -192,20 +193,21 @@ int main(int argc, char * argv[]){
     i++;
   }
   // Preenche os 3 ultimos bytes com 0
-  while (i < TAM_PACOTE+4) {
+  while (i <= TAM_PACOTE+4) {
     // Loop
     encoding[i] = 0;
-    // printf("%d\n", i);
     i++;
   }
 
-  //TODO
+  #if DEBUG == 5
+  printf("\n TAM encoding %d\n", i);
+  #endif
+
   // Impressao do encoding
   printf("\n\nEncoding [Part II]: alignment of i(x) AND i(x) << (3 bytes) = ");
   i = 0;
-  while (i < TAM_PACOTE+3) {
+  while (i < TAM_PACOTE+4) {
     printf("0x%x ", encoding[i]);
-    // printf("%d\n", i);
     // Loop
     i++;
   }
@@ -452,21 +454,26 @@ int main(int argc, char * argv[]){
     // Loop
     i++;
   }
+  #if DEBUG == 5
+  printf("\n TAM g(x) %d\n", i);
+  #endif
+
   // Preenche os n_bytes_0 ultimos bytes com 0
-  while (i < n_bytes_0+1) {
+  while (i <= 4+n_bytes_0) {
     // Loop
     gerador_deslocado[i] = 0;
-    // printf("%d\n", i);
     i++;
   }
 
-  //TODO
+  #if DEBUG == 5
+  printf("\n TAM g(x) %d\n", i);
+  #endif
+
   // Impressao do gerador deslocado
   printf("\n\ng(x) [Part II]: alignment of g(x) AND g(x) << (%d bytes) = ", n_bytes_0);
   i = 0;
   while (i < 4+n_bytes_0) {
     printf("0x%x ", gerador_deslocado[i]);
-    // printf("%d\n", i);
     // Loop
     i++;
   }
