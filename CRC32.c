@@ -225,8 +225,7 @@ int main(int argc, char * argv[]){
    * Divisao
    */
   // Grau inicial do encoding
-  int grau_encoding;
-  grau_encoding = ((TAM_PACOTE)*8)+26;
+  int grau_encoding = ((TAM_PACOTE)*8)+26;
 
   #if DEBUG == 3
   printf("grau inicial encoding = %d\n", grau_encoding);
@@ -313,7 +312,7 @@ int main(int argc, char * argv[]){
   #endif
 
   // Numero de bits a serem deslocados dentro do g(x)
-  unsigned int n_bits = n_deslocamentos_gerador % 8;
+  unsigned int n_bits = 3;
   #if DEBUG == 4
   printf("numero bits um a um = %d\n\n", n_bits);
   #endif
@@ -483,7 +482,7 @@ int main(int argc, char * argv[]){
   printf("\n\n");
 
   // Divisao em si
-  printf("Division: ");
+  //printf("Division: ");
 
   // Enquanto o byte 4+n_bytes_0 do resultado for diferente do ultimo byte do gerador
   // printf("%x\n", gerador_deslocado[4+n_bytes_0]);
@@ -505,12 +504,32 @@ int main(int argc, char * argv[]){
 
   unsigned short int resultado[(4+1)+n_bytes_0];
 
-  int iteracoes = 0;
+  int contador = 0;
   // Enquanto o ultimo byte do gerador_deslocado for diferente de 0xb7
+  int ronaldo = 0;
   while(resultado[3+n_bytes_0]!=0xb7){
 
     // Impressao do gerador deslocado
-    printf("\n\nShifted g(x) [Part I]: i(x) >> 1 (byte to byte) = ");
+    //printf("\n\nShifted g(x) [Part I]: i(x) >> 1 (byte to byte) = ");
+
+    // Xor bit a bit
+    // printf("INIT\n");
+    contador = 0;
+    while (contador < TAM_PACOTE+4) {
+      if(gerador_deslocado[contador]!=0){
+        //printf("%d: E %x ", ronaldo, encoding[contador]);
+      }
+
+      encoding[contador] ^= gerador_deslocado[contador];
+
+      if(gerador_deslocado[contador]!=0){
+        //printf("G %x ", gerador_deslocado[contador]);
+        //printf("R %x\n\n", encoding[contador]);
+      }
+
+      contador++;
+    }
+    // printf("FIM\n");
 
     // Primeiro elemento
     deslocamento_gerador = *aux_gerador_deslocado;
@@ -613,14 +632,14 @@ int main(int argc, char * argv[]){
       // Preenche o primeiro byte
       resultado[i+1] = (lsbit_byte_anterior << 7) | (msnibble_ms3b << 4) | (msnibble_lsb << 3) | (lsnibble_ms3b);
 
-      printf("0x%x ", resultado[i]);
+      //printf("0x%x ", resultado[i]);
 
       // Vai para o proximo byte do gerador_deslocado
       aux_gerador_deslocado_anterior++;
       aux_gerador_deslocado++;
       i++;
     }
-    printf("\n");
+    //printf("\n");
 
     i = 0;
     // Salva resultado no g(x)
@@ -629,27 +648,22 @@ int main(int argc, char * argv[]){
       i++;
     }
 
-    // Xor bit a bit
-    // contador = 0;
-    // while (contador < TAM_PACOTE+4) {
-    //   encoding[i] ^= gerador_deslocado[i];
-    //   printf("0x%x ", encoding[i]);
-    //   contador++;
-    // }
-    // printf("\n");
-
     // Voltar para o comeco do g(x)
     aux_gerador_deslocado = gerador_deslocado;
     aux_gerador_deslocado_anterior = gerador_deslocado;
 
     // Loop
-    iteracoes++;
+    ronaldo++;
   }
 
-  // // Impressao do campo CRC
-  // printf("\nCRC Field: r(x) = ");
-  // printf("0x%x\n", encoding);
-  // printf("\n");
+  // Impressao do campo CRC
+  printf("\nCRC Field: r(x) = ");
+  contador = 0;
+  while (contador < TAM_PACOTE+4) {
+    printf("0x%x ", encoding[contador]);
+    contador++;
+  }
+  printf("\n");
 
   #else
   /* Polinomio gerador do exemplo do livro:
