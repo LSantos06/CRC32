@@ -507,7 +507,7 @@ int main(int argc, char * argv[]){
 
   int iteracoes = 0;
   // Enquanto o ultimo byte do gerador_deslocado for diferente de 0xb7
-  while(iteracoes < 3){
+  while(resultado[3+n_bytes_0]!=0xb7){
 
     // Impressao do gerador deslocado
     printf("\n\nShifted g(x) [Part I]: i(x) >> 1 (byte to byte) = ");
@@ -620,8 +620,14 @@ int main(int argc, char * argv[]){
       aux_gerador_deslocado++;
       i++;
     }
-    printf("FIM\n");
-    printf("%d\n", i);
+    printf("\n");
+
+    i = 0;
+    // Salva resultado no g(x)
+    while (i < (4)+n_bytes_0) {
+      gerador_deslocado[i] = resultado[i];
+      i++;
+    }
 
     // Xor bit a bit
     // contador = 0;
@@ -633,8 +639,8 @@ int main(int argc, char * argv[]){
     // printf("\n");
 
     // Voltar para o comeco do g(x)
-    aux_gerador_deslocado = resultado;
-    aux_gerador_deslocado_anterior = resultado;
+    aux_gerador_deslocado = gerador_deslocado;
+    aux_gerador_deslocado_anterior = gerador_deslocado;
 
     // Loop
     iteracoes++;
