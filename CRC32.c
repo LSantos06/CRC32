@@ -1,7 +1,7 @@
 #include "pacote.h"
 
 // Variavel utilizada para debug
-#define DEBUG 11
+#define DEBUG 0
 // 0 => desativado
 // 1, 6 e 9=> para verificao do ponteiro auxnos deslocamentos
 // 2 e 7 => deslocamento e alinhamento
@@ -499,13 +499,15 @@ int main(int argc, char * argv[]){
   unsigned char msnibble_lsb;        // => 110(0) 0001 => 0
                                      // => 1100   000(1) => 1 (proximo lsbit_byte_anterior)
                                      // Aplica o deslocamento
-  unsigned char msnibble_ms2b;       // => (x)110 => 6; x = lsbit_byte_anterior
-  unsigned char lsnibble_ms2b;       // => (x)000 => 0; x = msnibble_lsb
+  unsigned char msnibble_ms3b;       // => (x)110 => 6; x = lsbit_byte_anterior
+  unsigned char lsnibble_ms3b;       // => (x)000 => 0; x = msnibble_lsb
                                      // loop
+
+  unsigned short int resultado[(4+1)+n_bytes_0];
 
   int iteracoes = 0;
   // Enquanto o ultimo byte do gerador_deslocado for diferente de 0xb7
-  while(iteracoes < 3){
+  while(resultado[3+n_bytes_0]!=0xb7){
 
     // Impressao do gerador deslocado
     printf("\n\nShifted g(x) [Part I]: i(x) >> 1 (byte to byte) = ");
@@ -528,20 +530,21 @@ int main(int argc, char * argv[]){
     printf("DESLOC %x\n", deslocamento_gerador);
     #endif
 
-    // 2 bits mais significativos do nibble mais significativo deslocado
-    msnibble_ms2b = deslocamento_gerador & 0x70;
+    // 3 bits mais significativos do nibble mais significativo deslocado
+    msnibble_ms3b = deslocamento_gerador & 0x70;
+    msnibble_ms3b >>= 4;
     #if DEBUG == 8
     printf("(msnibble_ms2b) %x\t", msnibble_ms2b);
     #endif
 
-    // 2 bits mais significativos do nibble menos significativo deslocado
-    lsnibble_ms2b = deslocamento_gerador & 0x7;
+    // 3 bits mais significativos do nibble menos significativo deslocado
+    lsnibble_ms3b = deslocamento_gerador & 0x7;
     #if DEBUG == 8
     printf("(lsnibble_ms2b) %x\n", lsnibble_ms2b);
     #endif
 
     // Preenche o primeiro byte
-    gerador_deslocado[0] = 0 | (msnibble_ms2b) | (msnibble_lsb) | (lsnibble_ms2b);
+    resultado[0] = 0 | (msnibble_ms3b << 4) | (msnibble_lsb << 3) | (lsnibble_ms3b);
 
     #if DEBUG == 8
     printf("gerador_deslocado[0] %x\n", gerador_deslocado[0]);
@@ -560,31 +563,31 @@ int main(int argc, char * argv[]){
       //printf("aux_anterior = %p\n", aux_gerador_deslocado_anterior);
       //printf("sg(x) = %p\n", (void*)&gerador_deslocado[i]);
 
-      printf("Conteudo\n");
-      printf("aux = %x\n", *aux_gerador_deslocado);
-      printf("aux_anterior = %x\n", *aux_gerador_deslocado_anterior);
-      printf("sg(x) = %x\n", gerador_deslocado[i]);
+      // printf("Conteudo\n");
+      // printf("aux = %x\n", *aux_gerador_deslocado);
+      // printf("aux_anterior = %x\n", *aux_gerador_deslocado_anterior);
+      // printf("sg(x) = %x\n", gerador_deslocado[i]);
       #endif
 
       // Deslocamento armazena o byte atualdo gerador_deslocado
       deslocamento_gerador_anterior = *aux_gerador_deslocado_anterior;
       deslocamento_gerador = *aux_gerador_deslocado;
 
-      #if DEBUG == 8
-      printf("\nBYTE ANT %x\n", *aux_gerador_deslocado_anterior);
+      #if DEBUG == 11
+      printf("\n\nBYTE ANT %x\n", *aux_gerador_deslocado_anterior);
       printf("BYTE %x\n", *aux_gerador_deslocado);
       #endif
 
-      // Bit menos significativo do nibble mais significativo
+      // Bit menos significativo do nibble mais significativo ANTERIOR
       lsbit_byte_anterior = deslocamento_gerador_anterior & 0x1;
-      #if DEBUG == 8
+      #if DEBUG == 11
       printf("Deslocamento\n");
       printf("(lsbit_byte_anterior) %x\t", lsbit_byte_anterior);
       #endif
-      // Bit menos significativo do nibble mais significativo
+      // Bit menos significativo do nibble mais significativo ATUAL
       msnibble_lsb = deslocamento_gerador & 0x10;
       msnibble_lsb >>=4;
-      #if DEBUG == 8
+      #if DEBUG == 11
       printf("(msnibble_lsb) %x\t", msnibble_lsb);
       #endif
 
@@ -594,29 +597,37 @@ int main(int argc, char * argv[]){
       printf("DESLOC %x\n", deslocamento_gerador);
       #endif
 
-      // 2 bits mais significativos do nibble mais significativo deslocado
-      msnibble_ms2b = deslocamento_gerador & 0x70;
-      #if DEBUG == 8
-      printf("(msnibble_ms2b) %x\t", msnibble_ms2b);
+      // 3 bits mais significativos do nibble mais significativo deslocado
+      msnibble_ms3b = deslocamento_gerador & 0x70;
+      msnibble_ms3b >>= 4;
+      #if DEBUG == 11
+      printf("(msnibble_ms2b) %x\t", msnibble_ms3b);
       #endif
 
-      // 2 bits mais significativos do nibble menos significativo deslocado
-      lsnibble_ms2b = deslocamento_gerador & 0x7;
-      #if DEBUG == 8
-      printf("(lsnibble_ms2b) %x\n", lsnibble_ms2b);
+      // 3 bits mais significativos do nibble menos significativo deslocado
+      lsnibble_ms3b = deslocamento_gerador & 0x7;
+      #if DEBUG == 11
+      printf("(lsnibble_ms2b) %x\n", lsnibble_ms3b);
       #endif
 
       // Preenche o primeiro byte
-      gerador_deslocado[i] = (lsbit_byte_anterior << 7) | (msnibble_ms2b) | (msnibble_lsb << 3) | (lsnibble_ms2b);
+      resultado[i+1] = (lsbit_byte_anterior << 7) | (msnibble_ms3b << 4) | (msnibble_lsb << 3) | (lsnibble_ms3b);
 
-      printf("0x%x ", gerador_deslocado[i]);
+      printf("0x%x ", resultado[i]);
 
       // Vai para o proximo byte do gerador_deslocado
       aux_gerador_deslocado_anterior++;
       aux_gerador_deslocado++;
       i++;
     }
-    printf("FIM\n");
+    printf("\n");
+
+    i = 0;
+    // Salva resultado no g(x)
+    while (i < (4)+n_bytes_0) {
+      gerador_deslocado[i] = resultado[i];
+      i++;
+    }
 
     // Xor bit a bit
     // contador = 0;
