@@ -1,16 +1,9 @@
 #include "pacote.h"
 
 // Variavel utilizada para debug
-#define DEBUG 0
+#define DEBUG 100
 // 0 => desativado
-// 1, 6 e 9=> para verificao do ponteiro auxnos deslocamentos
-// 2 e 7 => deslocamento e alinhamento
-// 3 => calculo do grau
-// 4 => n deslocamentos g(x)
-// 5 => tamanhos do enconding e g(x)
-// 8 => bits de cada byte do gerador
-// 10 =>
-// 11 => comparacao ultimo byte do gerador com d7
+// 100 => imprime cada iteracao da divisao
 
 // Variavel utilizada para rodar o exemplo do livro
 #define EXEMPLO 0
@@ -311,6 +304,7 @@ int main(int argc, char * argv[]){
   printf("numero bytes 0 no fim = %d\n", n_bytes_0);
   #endif
 
+  //TODO
   // Numero de bits a serem deslocados dentro do g(x)
   unsigned int n_bits = 3;
   #if DEBUG == 4
@@ -506,25 +500,31 @@ int main(int argc, char * argv[]){
 
   int contador = 0;
   // Enquanto o ultimo byte do gerador_deslocado for diferente de 0xb7
-  int ronaldo = 0;
+  int iteracoes = 0;
   while(resultado[3+n_bytes_0]!=0xb7){
 
     // Impressao do gerador deslocado
-    //printf("\n\nShifted g(x) [Part I]: i(x) >> 1 (byte to byte) = ");
+    #if DEBUG == 100
+    printf("\n\nShifted g(x) [Part I]: i(x) >> 1 (byte to byte) = \n");
+    #endif
 
     // Xor bit a bit
     // printf("INIT\n");
     contador = 0;
     while (contador < TAM_PACOTE+4) {
       if(gerador_deslocado[contador]!=0){
-        //printf("%d: E %x ", ronaldo, encoding[contador]);
+        #if DEBUG == 100
+          printf("Iteracao%d: Encoding %x ", iteracoes, encoding[contador]);
+        #endif
       }
 
       encoding[contador] ^= gerador_deslocado[contador];
 
       if(gerador_deslocado[contador]!=0){
-        //printf("G %x ", gerador_deslocado[contador]);
-        //printf("R %x\n\n", encoding[contador]);
+        #if DEBUG == 100
+          printf("Gerador %x ", gerador_deslocado[contador]);
+          printf("Resultado Xor %x\n\n", encoding[contador]);
+        #endif
       }
 
       contador++;
@@ -632,14 +632,18 @@ int main(int argc, char * argv[]){
       // Preenche o primeiro byte
       resultado[i+1] = (lsbit_byte_anterior << 7) | (msnibble_ms3b << 4) | (msnibble_lsb << 3) | (lsnibble_ms3b);
 
-      //printf("0x%x ", resultado[i]);
+      #if DEBUG == 100
+      printf("0x%x ", resultado[i]);
+      #endif
 
       // Vai para o proximo byte do gerador_deslocado
       aux_gerador_deslocado_anterior++;
       aux_gerador_deslocado++;
       i++;
     }
-    //printf("\n");
+    #if DEBUG == 100
+      printf("\n");
+    #endif
 
     i = 0;
     // Salva resultado no g(x)
@@ -652,18 +656,31 @@ int main(int argc, char * argv[]){
     aux_gerador_deslocado = gerador_deslocado;
     aux_gerador_deslocado_anterior = gerador_deslocado;
 
+    // Impressao do campo CRC
+    #if DEBUG == 100
+      printf("\nCRC Field: r(x) = ");
+      contador = 0;
+      while (contador < TAM_PACOTE+4) {
+        printf("0x%x ", encoding[contador]);
+        contador++;
+      }
+      printf("\n");
+    #endif
+
     // Loop
-    ronaldo++;
+    iteracoes++;
   }
 
   // Impressao do campo CRC
-  printf("\nCRC Field: r(x) = ");
-  contador = 0;
-  while (contador < TAM_PACOTE+4) {
-    printf("0x%x ", encoding[contador]);
-    contador++;
-  }
-  printf("\n");
+  #if DEBUG == 0
+    printf("\nCRC Field: r(x) = ");
+    contador = 0;
+    while (contador < TAM_PACOTE+4) {
+      printf("0x%x ", encoding[contador]);
+      contador++;
+    }
+    printf("\n");
+  #endif
 
   #else
   /* Polinomio gerador do exemplo do livro:
