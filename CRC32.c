@@ -1,7 +1,7 @@
 #include "pacote.h"
 
 // Variavel utilizada para debug
-#define DEBUG 100
+#define DEBUG 0
 // 0 => desativado
 // 100 => imprime cada iteracao da divisao
 
@@ -495,13 +495,36 @@ int main(int argc, char * argv[]){
   unsigned char msnibble_ms3b;       // => (x)110 => 6; x = lsbit_byte_anterior
   unsigned char lsnibble_ms3b;       // => (x)000 => 0; x = msnibble_lsb
                                      // loop
+  // Bits de comparacao
+  unsigned char bit7_g;
+  unsigned char bit6_g;
+  unsigned char bit5_g;
+  unsigned char bit4_g;
+  unsigned char bit3_g;
+  unsigned char bit2_g;
+  unsigned char bit1_g;
+  unsigned char bit0_g;
 
+  unsigned char bit7_e;
+  unsigned char bit6_e;
+  unsigned char bit5_e;
+  unsigned char bit4_e;
+  unsigned char bit3_e;
+  unsigned char bit2_e;
+  unsigned char bit1_e;
+  unsigned char bit0_e;
+
+  // Vetor de resultado
   unsigned short int resultado[(4+1)+n_bytes_0];
+
+  int flag1 = 0;
 
   int contador = 0;
   // Enquanto o ultimo byte do gerador_deslocado for diferente de 0xb7
   int iteracoes = 0;
   while(resultado[3+n_bytes_0]!=0xb7){
+
+    flag1 = 0;
 
     // Impressao do gerador deslocado
     #if DEBUG == 100
@@ -518,7 +541,69 @@ int main(int argc, char * argv[]){
         #endif
       }
 
-      encoding[contador] ^= gerador_deslocado[contador];
+      // if x000 == x000 || 0x00 == 0x00 || 00x0 == 00x0 || 000x == 000x (byte a byte)
+      //   xor
+      // else
+      //   desloca o gerador
+      // if(gerador_deslocado[contador]!=0 && flag1 == 0){
+      //   flag1 = 1;
+      //
+      //   bit7_g = (gerador_deslocado[contador] & 0x80) >> 7;
+      //   bit6_g = (gerador_deslocado[contador] & 0x40) >> 6;
+      //   bit5_g = (gerador_deslocado[contador] & 0x20) >> 5;
+      //   bit4_g = (gerador_deslocado[contador] & 0x10) >> 4;
+      //   bit3_g = (gerador_deslocado[contador] & 0x8) >> 3;
+      //   bit2_g = (gerador_deslocado[contador] & 0x4) >> 2;
+      //   bit1_g = (gerador_deslocado[contador] & 0x2) >> 1;
+      //   bit0_g = (gerador_deslocado[contador] & 0x1);
+      //
+      //   bit7_e = (encoding[contador] & 0x80) >> 7;
+      //   bit6_e = (encoding[contador] & 0x40) >> 6;
+      //   bit5_e = (encoding[contador] & 0x20) >> 5;
+      //   bit4_e = (encoding[contador] & 0x10) >> 4;
+      //   bit3_e = (encoding[contador] & 0x8) >> 3;
+      //   bit2_e = (encoding[contador] & 0x4) >> 2;
+      //   bit1_e = (encoding[contador] & 0x2) >> 1;
+      //   bit0_e = (encoding[contador] & 0x1);
+      //
+      //   #if DEBUG == 100
+      //     printf("BITS ENCODING: ");
+      //     printf("%x ", bit7_e);
+      //     printf("%x ", bit6_e);
+      //     printf("%x ", bit5_e);
+      //     printf("%x ", bit4_e);
+      //     printf("%x ", bit3_e);
+      //     printf("%x ", bit2_e);
+      //     printf("%x ", bit1_e);
+      //     printf("%x\n", bit0_e);
+      //
+      //     printf("BITS GERADOR: ");
+      //     printf("%x ", bit7_g);
+      //     printf("%x ", bit6_g);
+      //     printf("%x ", bit5_g);
+      //     printf("%x ", bit4_g);
+      //     printf("%x ", bit3_g);
+      //     printf("%x ", bit2_g);
+      //     printf("%x ", bit1_g);
+      //     printf("%x\n", bit0_g);
+      //   #endif
+      //
+      //   // Xor em si
+      //   if((bit7_e == 1 && bit7_g == 1) ||
+      //      (bit7_e == 0 && bit6_e == 1 && bit6_g == 1) ||
+      //      (bit6_e == 0 && bit5_e == 1 && bit5_g == 1) ||
+      //      (bit5_e == 0 && bit4_e == 1 && bit4_g == 1) ||
+      //      (bit4_e == 0 && bit3_e == 1 && bit3_g == 1) ||
+      //      (bit3_e == 0 && bit2_e == 1 && bit2_g == 1) ||
+      //      (bit2_e == 0 && bit1_e == 1 && bit1_g == 1) ||
+      //      (bit1_e == 0 && bit0_e == 1 && bit0_g == 1)){
+      //        printf("EH ");
+      //        encoding[contador] ^= gerador_deslocado[contador];
+      //      }
+      // }
+      // else{
+        encoding[contador] ^= gerador_deslocado[contador];
+      // }
 
       if(gerador_deslocado[contador]!=0){
         #if DEBUG == 100
