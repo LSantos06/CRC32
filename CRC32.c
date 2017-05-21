@@ -3,14 +3,7 @@
 // Variavel utilizada para debug
 #define DEBUG 0
 // 0 => desativado
-// 1, 6 e 9=> para verificao do ponteiro auxnos deslocamentos
-// 2 e 7 => deslocamento e alinhamento
-// 3 => calculo do grau
-// 4 => n deslocamentos g(x)
-// 5 => tamanhos do enconding e g(x)
-// 8 => bits de cada byte do gerador
-// 10 =>
-// 11 => comparacao ultimo byte do gerador com d7
+// 100 => imprime o deslocamento do gerador
 
 // Variavel utilizada para rodar o exemplo do livro
 #define EXEMPLO 0
@@ -225,8 +218,7 @@ int main(int argc, char * argv[]){
    * Divisao
    */
   // Grau inicial do encoding
-  int grau_encoding;
-  grau_encoding = ((TAM_PACOTE)*8)+26;
+  int grau_encoding = ((TAM_PACOTE)*8)+26;
 
   #if DEBUG == 3
   printf("grau inicial encoding = %d\n", grau_encoding);
@@ -298,7 +290,7 @@ int main(int argc, char * argv[]){
 
   } while (encoding[i] == 0);
 
-  printf("Degree of encoding = %d\n\n", grau_encoding);
+  //printf("Degree of encoding = %d\n\n", grau_encoding);
 
   // Gerador possui grau x26, para ter xn, eh necessario deslocar de n-26
   unsigned int n_deslocamentos_gerador = grau_encoding - 26;
@@ -312,8 +304,9 @@ int main(int argc, char * argv[]){
   printf("numero bytes 0 no fim = %d\n", n_bytes_0);
   #endif
 
+  //TODO
   // Numero de bits a serem deslocados dentro do g(x)
-  unsigned int n_bits = n_deslocamentos_gerador % 8;
+  unsigned int n_bits = 3;
   #if DEBUG == 4
   printf("numero bits um a um = %d\n\n", n_bits);
   #endif
@@ -483,7 +476,7 @@ int main(int argc, char * argv[]){
   printf("\n\n");
 
   // Divisao em si
-  printf("Division: ");
+  //printf("Division: ");
 
   // Enquanto o byte 4+n_bytes_0 do resultado for diferente do ultimo byte do gerador
   // printf("%x\n", gerador_deslocado[4+n_bytes_0]);
@@ -502,15 +495,128 @@ int main(int argc, char * argv[]){
   unsigned char msnibble_ms3b;       // => (x)110 => 6; x = lsbit_byte_anterior
   unsigned char lsnibble_ms3b;       // => (x)000 => 0; x = msnibble_lsb
                                      // loop
+  // Bits de comparacao
+  unsigned char bit7_g;
+  unsigned char bit6_g;
+  unsigned char bit5_g;
+  unsigned char bit4_g;
+  unsigned char bit3_g;
+  unsigned char bit2_g;
+  unsigned char bit1_g;
+  unsigned char bit0_g;
 
+  unsigned char bit7_e;
+  unsigned char bit6_e;
+  unsigned char bit5_e;
+  unsigned char bit4_e;
+  unsigned char bit3_e;
+  unsigned char bit2_e;
+  unsigned char bit1_e;
+  unsigned char bit0_e;
+
+  // Vetor de resultado
   unsigned short int resultado[(4+1)+n_bytes_0];
 
-  int iteracoes = 0;
+  int flag1 = 0;
+
+  int contador = 0;
   // Enquanto o ultimo byte do gerador_deslocado for diferente de 0xb7
-  while(resultado[3+n_bytes_0]!=0xb7){
+  int iteracoes = 0;
+  while(/*iteracoes<10*/resultado[3+n_bytes_0]!=0xb7){
+
+    flag1 = 0;
 
     // Impressao do gerador deslocado
-    printf("\n\nShifted g(x) [Part I]: i(x) >> 1 (byte to byte) = ");
+    #if DEBUG == 100
+    printf("\n\nShifted g(x) [Part I]: i(x) >> 1 (byte to byte) = \n");
+    #endif
+
+    // Xor bit a bit
+    // printf("INIT\n");
+    contador = 0;
+    while (contador < TAM_PACOTE+4) {
+      if(gerador_deslocado[contador]!=0){
+        #if DEBUG == 101
+          printf("Iteracao%d: Encoding %x ", iteracoes, encoding[contador]);
+        #endif
+      }
+
+      // if x000 == x000 || 0x00 == 0x00 || 00x0 == 00x0 || 000x == 000x (byte a byte)
+      //   xor
+      // else
+      //   desloca o gerador
+
+      // Pega o primeiro byte diferente de 0 do gerador_deslocado
+      if(gerador_deslocado[contador]!=0 && flag1 == 0){
+        flag1 = 1;
+
+        bit7_g = (gerador_deslocado[contador] & 0x80) >> 7;
+        bit6_g = (gerador_deslocado[contador] & 0x40) >> 6;
+        bit5_g = (gerador_deslocado[contador] & 0x20) >> 5;
+        bit4_g = (gerador_deslocado[contador] & 0x10) >> 4;
+        bit3_g = (gerador_deslocado[contador] & 0x8) >> 3;
+        bit2_g = (gerador_deslocado[contador] & 0x4) >> 2;
+        bit1_g = (gerador_deslocado[contador] & 0x2) >> 1;
+        bit0_g = (gerador_deslocado[contador] & 0x1);
+
+        bit7_e = (encoding[contador] & 0x80) >> 7;
+        bit6_e = (encoding[contador] & 0x40) >> 6;
+        bit5_e = (encoding[contador] & 0x20) >> 5;
+        bit4_e = (encoding[contador] & 0x10) >> 4;
+        bit3_e = (encoding[contador] & 0x8) >> 3;
+        bit2_e = (encoding[contador] & 0x4) >> 2;
+        bit1_e = (encoding[contador] & 0x2) >> 1;
+        bit0_e = (encoding[contador] & 0x1);
+
+        #if DEBUG == 101
+          printf("BITS ENCODING: ");
+          printf("%x ", bit7_e);
+          printf("%x ", bit6_e);
+          printf("%x ", bit5_e);
+          printf("%x ", bit4_e);
+          printf("%x ", bit3_e);
+          printf("%x ", bit2_e);
+          printf("%x ", bit1_e);
+          printf("%x\n", bit0_e);
+
+          printf("BITS GERADOR: ");
+          printf("%x ", bit7_g);
+          printf("%x ", bit6_g);
+          printf("%x ", bit5_g);
+          printf("%x ", bit4_g);
+          printf("%x ", bit3_g);
+          printf("%x ", bit2_g);
+          printf("%x ", bit1_g);
+          printf("%x\n", bit0_g);
+        #endif
+
+        // Xor em si
+        if((bit7_e == 1 && bit7_g == 1) ||
+           (bit6_e == 1 && bit6_g == 1) ||
+           (bit5_e == 1 && bit5_g == 1) ||
+           (bit4_e == 1 && bit4_g == 1) ||
+           (bit3_e == 1 && bit3_g == 1) ||
+           (bit2_e == 1 && bit2_g == 1) ||
+           (bit1_e == 1 && bit1_g == 1) ||
+           (bit0_e == 1 && bit0_g == 1)){
+             //printf("EH ");
+             encoding[contador] ^= gerador_deslocado[contador];
+           }
+      }
+      else{
+        encoding[contador] ^= gerador_deslocado[contador];
+      }
+
+      if(gerador_deslocado[contador]!=0){
+        #if DEBUG == 101
+          printf("Gerador %x ", gerador_deslocado[contador]);
+          printf("Resultado Xor %x\n\n", encoding[contador]);
+        #endif
+      }
+
+      contador++;
+    }
+    // printf("FIM\n");
 
     // Primeiro elemento
     deslocamento_gerador = *aux_gerador_deslocado;
@@ -613,14 +719,18 @@ int main(int argc, char * argv[]){
       // Preenche o primeiro byte
       resultado[i+1] = (lsbit_byte_anterior << 7) | (msnibble_ms3b << 4) | (msnibble_lsb << 3) | (lsnibble_ms3b);
 
+      #if DEBUG == 100
       printf("0x%x ", resultado[i]);
+      #endif
 
       // Vai para o proximo byte do gerador_deslocado
       aux_gerador_deslocado_anterior++;
       aux_gerador_deslocado++;
       i++;
     }
-    printf("\n");
+    #if DEBUG == 100
+      printf("\n");
+    #endif
 
     i = 0;
     // Salva resultado no g(x)
@@ -629,27 +739,35 @@ int main(int argc, char * argv[]){
       i++;
     }
 
-    // Xor bit a bit
-    // contador = 0;
-    // while (contador < TAM_PACOTE+4) {
-    //   encoding[i] ^= gerador_deslocado[i];
-    //   printf("0x%x ", encoding[i]);
-    //   contador++;
-    // }
-    // printf("\n");
-
     // Voltar para o comeco do g(x)
     aux_gerador_deslocado = gerador_deslocado;
     aux_gerador_deslocado_anterior = gerador_deslocado;
+
+    // Impressao do campo CRC
+    #if DEBUG == 101
+      printf("\nCRC Field: r(x) = ");
+      contador = 0;
+      while (contador < TAM_PACOTE+4) {
+        printf("0x%x ", encoding[contador]);
+        contador++;
+      }
+      printf("\n");
+    #endif
 
     // Loop
     iteracoes++;
   }
 
-  // // Impressao do campo CRC
-  // printf("\nCRC Field: r(x) = ");
-  // printf("0x%x\n", encoding);
-  // printf("\n");
+  // Impressao do campo CRC
+  // #if DEBUG == 0
+  //   printf("\nCRC Field: r(x) = ");
+  //   contador = 0;
+  //   while (contador < TAM_PACOTE+4) {
+  //     printf("0x%x ", encoding[contador]);
+  //     contador++;
+  //   }
+  //   printf("\n");
+  // #endif
 
   #else
   /* Polinomio gerador do exemplo do livro:
