@@ -4,6 +4,7 @@
 #define DEBUG 0
 // 0 => desativado
 // 100 => imprime o deslocamento do gerador
+// 101 => xor bit a bit
 
 // Variavel utilizada para rodar o exemplo do livro
 #define EXEMPLO 0
@@ -25,8 +26,6 @@
  *
  */
 int main(int argc, char * argv[]){
-
-  //TODO: funcao de impressao
 
   #if EXEMPLO == 0
   /* Polinomio gerador do CRC32:
@@ -304,7 +303,7 @@ int main(int argc, char * argv[]){
   printf("numero bytes 0 no fim = %d\n", n_bytes_0);
   #endif
 
-  //TODO
+  //TODO: Genralizacao
   // Numero de bits a serem deslocados dentro do g(x)
   unsigned int n_bits = 3;
   #if DEBUG == 4
@@ -517,14 +516,27 @@ int main(int argc, char * argv[]){
   // Vetor de resultado
   unsigned short int resultado[(4+1)+n_bytes_0];
 
+  // Controle do xor
   int flag1 = 0;
+  int do_xor = 0;
+
+  // Clausulas do xor
+  int clausula_7;
+  int clausula_6;
+  int clausula_5;
+  int clausula_4;
+  int clausula_3;
+  int clausula_2;
+  int clausula_1;
+  int clausula_0;
 
   int contador = 0;
   // Enquanto o ultimo byte do gerador_deslocado for diferente de 0xb7
   int iteracoes = 0;
-  while(/*iteracoes<10*/resultado[3+n_bytes_0]!=0xb7){
+  while(resultado[3+n_bytes_0]!=0xb7){
 
     flag1 = 0;
+    do_xor = 0;
 
     // Impressao do gerador deslocado
     #if DEBUG == 100
@@ -569,7 +581,7 @@ int main(int argc, char * argv[]){
         bit0_e = (encoding[contador] & 0x1);
 
         #if DEBUG == 101
-          printf("BITS ENCODING: ");
+          printf("\nBITS ENCODING: ");
           printf("%x ", bit7_e);
           printf("%x ", bit6_e);
           printf("%x ", bit5_e);
@@ -579,7 +591,7 @@ int main(int argc, char * argv[]){
           printf("%x ", bit1_e);
           printf("%x\n", bit0_e);
 
-          printf("BITS GERADOR: ");
+          printf("BITS GERADOR:  ");
           printf("%x ", bit7_g);
           printf("%x ", bit6_g);
           printf("%x ", bit5_g);
@@ -590,20 +602,93 @@ int main(int argc, char * argv[]){
           printf("%x\n", bit0_g);
         #endif
 
+        // Clausulas
+        clausula_7 = (bit7_e == 0 && bit7_g == 0);
+        clausula_6 = (bit6_e == 0 && bit6_g == 0);
+        clausula_5 = (bit5_e == 0 && bit5_g == 0);
+        clausula_4 = (bit4_e == 0 && bit4_g == 0);
+        clausula_3 = (bit3_e == 0 && bit3_g == 0);
+        clausula_2 = (bit2_e == 0 && bit2_g == 0);
+        clausula_1 = (bit1_e == 0 && bit1_g == 0);
+        clausula_0 = (bit0_e == 0 && bit0_g == 0);
+
+        #if DEBUG == 102
+          printf("CLAUSULAS:  ");
+          printf("%d ", clausula_7);
+          printf("%d ", clausula_6);
+          printf("%d ", clausula_5);
+          printf("%d ", clausula_4);
+          printf("%d ", clausula_3);
+          printf("%d ", clausula_2);
+          printf("%d ", clausula_1);
+          printf("%d\n", clausula_0);
+        #endif
+
         // Xor em si
-        if((bit7_e == 1 && bit7_g == 1) ||
-           (bit6_e == 1 && bit6_g == 1) ||
-           (bit5_e == 1 && bit5_g == 1) ||
-           (bit4_e == 1 && bit4_g == 1) ||
-           (bit3_e == 1 && bit3_g == 1) ||
-           (bit2_e == 1 && bit2_g == 1) ||
-           (bit1_e == 1 && bit1_g == 1) ||
-           (bit0_e == 1 && bit0_g == 1)){
-             //printf("EH ");
-             encoding[contador] ^= gerador_deslocado[contador];
-           }
+        if(bit7_e == 1 && bit7_g == 1){
+          #if DEBUG == 102
+            printf("DO XOR 7\n");
+          #endif
+          do_xor = 1;
+          encoding[contador] ^= gerador_deslocado[contador];
+        }
+        else if(clausula_7 && (bit6_e == 1 && bit6_g == 1)){
+          #if DEBUG == 102
+            printf("DO XOR 6\n");
+          #endif
+          do_xor = 1;
+          encoding[contador] ^= gerador_deslocado[contador];
+        }
+        else if(clausula_7 && clausula_6 && (bit5_e == 1 && bit5_g == 1)){
+          #if DEBUG == 102
+            printf("DO XOR 5\n");
+          #endif
+          do_xor = 1;
+          encoding[contador] ^= gerador_deslocado[contador];
+        }
+        else if(clausula_7 && clausula_6 && clausula_5 && (bit4_e == 1 && bit4_g == 1)){
+          #if DEBUG == 102
+            printf("DO XOR 4\n");
+          #endif
+          do_xor = 1;
+          encoding[contador] ^= gerador_deslocado[contador];
+        }
+        else if(clausula_7 && clausula_6 && clausula_5 && clausula_4 && (bit3_e == 1 && bit3_g == 1)){
+          #if DEBUG == 102
+            printf("DO XOR 3\n");
+          #endif
+          do_xor = 1;
+          encoding[contador] ^= gerador_deslocado[contador];
+        }
+        else if(clausula_7 && clausula_6 && clausula_5 && clausula_4 && clausula_3 && (bit2_e == 1 && bit2_g == 1)){
+          #if DEBUG == 102
+            printf("DO XOR 2\n");
+          #endif
+          do_xor = 1;
+          encoding[contador] ^= gerador_deslocado[contador];
+        }
+        else if(clausula_7 && clausula_6 && clausula_5 && clausula_4 && clausula_3 && clausula_2 && (bit1_e == 1 && bit1_g == 1)){
+          #if DEBUG == 102
+            printf("DO XOR 1\n");
+          #endif
+          do_xor = 1;
+          encoding[contador] ^= gerador_deslocado[contador];
+        }
+        else if(clausula_7 && clausula_6 && clausula_5 && clausula_4 && clausula_3 && clausula_2 && clausula_1 && (bit0_e == 1 && bit0_g == 1)){
+          #if DEBUG == 102
+            printf("DO XOR 0\n");
+          #endif
+          do_xor = 1;
+          encoding[contador] ^= gerador_deslocado[contador];
+        }
+        else{
+          #if DEBUG == 102
+            printf("DO NOT XOR\n");
+          #endif
+        }
       }
-      else{
+
+      else if(do_xor == 1){
         encoding[contador] ^= gerador_deslocado[contador];
       }
 
@@ -747,7 +832,7 @@ int main(int argc, char * argv[]){
     #if DEBUG == 101
       printf("\nCRC Field: r(x) = ");
       contador = 0;
-      while (contador < TAM_PACOTE+4) {
+      while (contador < TAM_PACOTE+3) {
         printf("0x%x ", encoding[contador]);
         contador++;
       }
@@ -759,15 +844,17 @@ int main(int argc, char * argv[]){
   }
 
   // Impressao do campo CRC
-  // #if DEBUG == 0
-  //   printf("\nCRC Field: r(x) = ");
-  //   contador = 0;
-  //   while (contador < TAM_PACOTE+4) {
-  //     printf("0x%x ", encoding[contador]);
-  //     contador++;
-  //   }
-  //   printf("\n");
-  // #endif
+  #if DEBUG == 0
+    printf("CRC Field: r(x) = ");
+    contador = 0;
+    while (contador < TAM_PACOTE+4) {
+      if(encoding[contador] != 0){
+        printf("0x%x ", encoding[contador]);
+      }
+      contador++;
+    }
+    printf("\n");
+  #endif
 
   #else
   /* Polinomio gerador do exemplo do livro:
